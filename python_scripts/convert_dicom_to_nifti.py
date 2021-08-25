@@ -148,9 +148,6 @@ def get_dicom_series(dicom_directory: Union[str, Path]) -> Dict:
         except Exception:
             logger.warning("Unable to read: %s" % dicom_filepath)
 
-    print(dicom_series.keys())
-    print(dicom_series.values())
-
     return dicom_series
 
 
