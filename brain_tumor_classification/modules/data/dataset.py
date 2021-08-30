@@ -1,10 +1,12 @@
 """Module with datasets"""
 import os
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 from torch.utils.data import Dataset
+
+from brain_tumor_classification.modules.data.utils import get_load_transforms
 
 
 class BrainDataset(Dataset):
@@ -13,15 +15,29 @@ class BrainDataset(Dataset):
     ):
         self.list_of_paths = list_of_paths
 
-        self.labels = self._load_labels(labels_path=labels_path)
+        self.img_key = 'image'
+        self.lbl_key = 'label'
 
-    def __getitem__(self, idx: int) -> None:
+        self.labels = self._load_labels(labels_path=labels_path)
+        self.load_transforms = get_load_transforms(
+            img_key=self.img_key,
+            original_min=0,
+            original_max=1000,
+            res_min=0,
+            res_max=1,
+        )
+
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
         image_path = self.list_of_paths[idx]
         image_idx = self._get_image_idx(image_path=image_path)
 
         image_label = self.labels[image_idx]
 
-        print(image_path, image_label)
+        item = {self.img_key: image_path, self.lbl_key: image_label}
+
+        item = self.load_transforms(item)
+
+        return item
 
     def __len__(self):
         return len(self.list_of_paths)
