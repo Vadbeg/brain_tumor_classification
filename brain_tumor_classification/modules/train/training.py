@@ -1,17 +1,12 @@
 """Training module"""
 
-import warnings
-from multiprocessing import Lock
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
-import numpy as np
 import pytorch_lightning as pl
 import torch
-from monai.losses import DiceLoss
-from monai.metrics.meandice import compute_meandice
-from pytorch_lightning.loggers.base import LoggerCollection
-from pytorch_lightning.loggers.mlflow import MLFlowLogger
+import torch.nn.functional as F
+import torchmetrics
 from torch.utils.data import DataLoader
 
 from brain_tumor_classification.modules.data.dataset import BrainDataset
@@ -51,6 +46,7 @@ class BrainClassification3DModel(pl.LightningModule):
         )
         self.labels_path = labels_path
 
+        self.num_classes = num_classes
         self.spatial_size = spatial_size
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -61,6 +57,10 @@ class BrainClassification3DModel(pl.LightningModule):
             n_input_channels=num_input_channels,
             n_classes=num_classes,
         )
+
+        self.f1_func = torchmetrics.F1(num_classes=num_classes)
+        self.acc_func = torchmetrics.Accuracy(num_classes=num_classes)
+        self.auc_func = torchmetrics.AUC()
 
     def training_step(
         self, batch: Dict, batch_id: int
@@ -74,6 +74,7 @@ class BrainClassification3DModel(pl.LightningModule):
         self.log(
             name='train_loss', value=loss, prog_bar=True, logger=True, on_epoch=True
         )
+        self._log_metrics(preds=result, target=label, prefix='train')
 
         return loss
 
@@ -87,6 +88,7 @@ class BrainClassification3DModel(pl.LightningModule):
         loss = self.loss(result, label)
 
         self.log(name='val_loss', value=loss, prog_bar=True, logger=True, on_epoch=True)
+        self._log_metrics(preds=result, target=label, prefix='val')
 
         return loss
 
@@ -165,6 +167,37 @@ class BrainClassification3DModel(pl.LightningModule):
         }
 
         return configuration
+
+    def _log_metrics(
+        self, preds: torch.Tensor, target: torch.Tensor, prefix: str
+    ) -> None:
+        f1_value = self.f1_func(preds, target)
+        acc_value = self.acc_func(preds, target)
+        auc_value = self.auc_func(
+            preds, F.one_hot(target, num_classes=self.num_classes)
+        )
+
+        self.log(
+            name=f'{prefix}_f1',
+            value=f1_value,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+        )
+        self.log(
+            name=f'{prefix}_acc',
+            value=acc_value,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+        )
+        self.log(
+            name=f'{prefix}_auc',
+            value=auc_value,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+        )
 
     def _get_model_output(self):
         pass
