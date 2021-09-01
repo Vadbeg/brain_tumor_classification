@@ -72,7 +72,12 @@ class BrainClassification3DModel(pl.LightningModule):
         loss = self.loss(result, label)
 
         self.log(
-            name='train_loss', value=loss, prog_bar=True, logger=True, on_epoch=True
+            name='train_loss',
+            value=loss,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+            on_step=True,
         )
         self._log_metrics(preds=result, target=label, prefix='train')
 
@@ -87,7 +92,14 @@ class BrainClassification3DModel(pl.LightningModule):
         result = self.model(image)
         loss = self.loss(result, label)
 
-        self.log(name='val_loss', value=loss, prog_bar=True, logger=True, on_epoch=True)
+        self.log(
+            name='val_loss',
+            value=loss,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+            on_step=True,
+        )
         self._log_metrics(preds=result, target=label, prefix='val')
 
         return loss
@@ -173,9 +185,9 @@ class BrainClassification3DModel(pl.LightningModule):
     ) -> None:
         f1_value = self.f1_func(preds, target)
         acc_value = self.acc_func(preds, target)
-        auc_value = self.auc_func(
-            preds, F.one_hot(target, num_classes=self.num_classes)
-        )
+        # auc_value = self.auc_func(
+        #     torch.argmax(preds), target
+        # )
 
         self.log(
             name=f'{prefix}_f1',
@@ -183,6 +195,7 @@ class BrainClassification3DModel(pl.LightningModule):
             prog_bar=True,
             logger=True,
             on_epoch=True,
+            on_step=True,
         )
         self.log(
             name=f'{prefix}_acc',
@@ -190,14 +203,15 @@ class BrainClassification3DModel(pl.LightningModule):
             prog_bar=True,
             logger=True,
             on_epoch=True,
+            on_step=True,
         )
-        self.log(
-            name=f'{prefix}_auc',
-            value=auc_value,
-            prog_bar=True,
-            logger=True,
-            on_epoch=True,
-        )
+        # self.log(
+        #     name=f'{prefix}_auc',
+        #     value=auc_value,
+        #     prog_bar=True,
+        #     logger=True,
+        #     on_epoch=True,
+        # )
 
     def _get_model_output(self):
         pass
