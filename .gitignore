@@ -130,6 +130,7 @@ dmypy.json
 
 .idea/
 notebooks/
+logs/
 
 *.nii
 *.nii.gz
