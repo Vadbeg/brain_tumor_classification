@@ -5,11 +5,10 @@ from typing import Dict, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
-import torch.nn.functional as F
 import torchmetrics
 from torch.utils.data import DataLoader
 
-from brain_tumor_classification.modules.data.dataset import BrainDataset
+from brain_tumor_classification.modules.data.datasets.train_dataset import BrainDataset
 from brain_tumor_classification.modules.data.utils import (
     create_data_loader,
     get_train_val_paths,
@@ -145,7 +144,7 @@ class BrainClassification3DModel(pl.LightningModule):
             dataset=train_brain_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=8,
+            num_workers=4,
         )
 
         return train_brain_dataloader
@@ -161,7 +160,7 @@ class BrainClassification3DModel(pl.LightningModule):
             dataset=val_brain_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=8,
+            num_workers=4,
         )
 
         return val_brain_dataloader

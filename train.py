@@ -1,8 +1,6 @@
 """Module for starting train script"""
 
 
-import os
-import sys
 import warnings
 
 from pytorch_lightning.utilities.cli import LightningCLI

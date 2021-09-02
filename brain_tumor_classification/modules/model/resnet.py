@@ -1,6 +1,7 @@
 """Module with resnet3d"""
 
 from functools import partial
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -210,7 +211,7 @@ class ResNet(nn.Module):
         return x
 
 
-def generate_resnet_model(model_depth, **kwargs):
+def generate_resnet_model(model_depth: int, **kwargs: Any) -> torch.nn.Module:
     assert model_depth in [10, 18, 34, 50, 101, 152, 200]
 
     if model_depth == 10:

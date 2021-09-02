@@ -4,22 +4,21 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
-from torch.utils.data import Dataset
 
+from brain_tumor_classification.modules.data.datasets.base_dataset import BaseDataset
 from brain_tumor_classification.modules.data.utils import get_load_transforms
 
 
-class BrainDataset(Dataset):
+class BrainDataset(BaseDataset):
     def __init__(
         self,
-        list_of_paths: List[Path],
+        list_of_paths: Union[List[Path], List[str]],
         labels_path: Union[Path, str],
         spatial_size: Tuple[int, int, int] = (196, 196, 128),
     ):
-        self.list_of_paths = list_of_paths
+        super().__init__(list_of_paths=list_of_paths)
 
-        self.img_key = 'image'
-        self.lbl_key = 'label'
+        self.list_of_paths = list_of_paths
 
         self.labels = self._load_labels(labels_path=labels_path)
         self.load_transforms = get_load_transforms(
