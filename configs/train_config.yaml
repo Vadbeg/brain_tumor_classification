@@ -3,7 +3,7 @@ trainer:
   logger:
     - class_path: pytorch_lightning.loggers.WandbLogger
       init_args:
-        name: first-try
+        name: masks-train
         project: brain-classification
         log_model: True
   checkpoint_callback: true
