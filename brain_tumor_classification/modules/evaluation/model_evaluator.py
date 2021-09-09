@@ -62,7 +62,7 @@ class ModelEvaluator:
     def _save_evaluation_result_to_csv(
         self,
         evaluation_result: List[Tuple[int, int]],
-        filename: str = 'sample_submission.csv',
+        filename: str = 'submission.csv',
     ) -> None:
         result_df = pd.DataFrame(
             data=evaluation_result,
