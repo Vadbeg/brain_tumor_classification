@@ -86,7 +86,6 @@ class BrainClassification3DModel(pl.LightningModule):
             prog_bar=True,
             logger=True,
             on_epoch=True,
-            on_step=True,
         )
         self._log_metrics(preds=result, target=label, prefix='train')
 
@@ -107,7 +106,6 @@ class BrainClassification3DModel(pl.LightningModule):
             prog_bar=True,
             logger=True,
             on_epoch=True,
-            on_step=True,
         )
         self._log_metrics(preds=result, target=label, prefix='val')
 
@@ -207,7 +205,6 @@ class BrainClassification3DModel(pl.LightningModule):
             prog_bar=True,
             logger=True,
             on_epoch=True,
-            on_step=True,
         )
         self.log(
             name=f'{prefix}_acc',
@@ -215,7 +212,6 @@ class BrainClassification3DModel(pl.LightningModule):
             prog_bar=True,
             logger=True,
             on_epoch=True,
-            on_step=True,
         )
 
     def training_epoch_end(self, outputs: List[Dict[str, torch.Tensor]]) -> None:
