@@ -72,10 +72,14 @@ trainer:
   stochastic_weight_avg: false
 model:
   train_dataset_path: /home/vadbeg/Data_SSD/Kaggle/RSNA_NIFTI/FLAIR_SITK/train
-  labels_path: /home/vadbeg/Data_SSD/Kaggle/RSNA_NIFTI/train_labels.csv
+  labels_path: /home/vadbeg/Data_SSD/Kaggle/rsna-miccai-brain-tumor-radiogenomic-classification/train_labels.csv
   train_split_percent: 0.7
   dataset_item_limit: null
   shuffle_dataset: true
+  ct_file_extension: '*.nii.gz'
+  index_position_in_name: 0
+  original_clip_min: 0
+  original_clip_max: 1000
   batch_size: 3
   spatial_size:
     - 196

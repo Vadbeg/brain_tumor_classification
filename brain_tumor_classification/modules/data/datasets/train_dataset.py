@@ -15,16 +15,20 @@ class BrainDataset(BaseDataset):
         list_of_paths: Union[List[Path], List[str]],
         labels_path: Union[Path, str],
         spatial_size: Tuple[int, int, int] = (196, 196, 128),
+        index_position_in_name: int = 0,
+        original_clip_min: int = 0,
+        original_clip_max: int = 1000,
     ):
         super().__init__(list_of_paths=list_of_paths)
 
         self.list_of_paths = list_of_paths
+        self.index_position_in_name = index_position_in_name
 
         self.labels = self._load_labels(labels_path=labels_path)
         self.load_transforms = get_load_transforms(
             img_key=self.img_key,
-            original_min=0,
-            original_max=1000,
+            original_min=original_clip_min,
+            original_max=original_clip_max,
             res_min=0,
             res_max=1,
             spatial_size=spatial_size,
@@ -32,7 +36,9 @@ class BrainDataset(BaseDataset):
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         image_path = self.list_of_paths[idx]
-        image_idx = self._get_image_idx(image_path=image_path)
+        image_idx = self._get_image_idx(
+            image_path=image_path, index_position_in_name=self.index_position_in_name
+        )
 
         image_label = self.labels[image_idx]
 
@@ -57,12 +63,14 @@ class BrainDataset(BaseDataset):
         return name_label_mapping
 
     @staticmethod
-    def _get_image_idx(image_path: Union[str, Path]) -> int:
+    def _get_image_idx(
+        image_path: Union[str, Path], index_position_in_name: int = 0
+    ) -> int:
         image_path = str(image_path)
         image_filename = image_path.split(os.sep)[-1]
 
         assert image_filename.endswith('.nii.gz'), 'Bad file provided'
 
-        image_index = int(image_filename.split('_')[0])
+        image_index = int(image_filename.split('_')[index_position_in_name])
 
         return image_index

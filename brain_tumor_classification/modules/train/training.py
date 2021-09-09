@@ -24,7 +24,11 @@ class BrainClassification3DModel(pl.LightningModule):
         train_split_percent: float = 0.7,
         dataset_item_limit: Optional[int] = 1,
         shuffle_dataset: bool = True,
+        ct_file_extension: str = '*.nii.gz',
+        index_position_in_name: int = 0,
         spatial_size: Tuple[int, int, int] = (196, 196, 128),
+        original_clip_min: int = 0,
+        original_clip_max: int = 1000,
         batch_size: int = 2,
         learning_rate: float = 0.001,
         model_depth: int = 10,
@@ -42,9 +46,13 @@ class BrainClassification3DModel(pl.LightningModule):
             train_split_percent=train_split_percent,
             item_limit=dataset_item_limit,
             shuffle=shuffle_dataset,
+            ct_file_extension=ct_file_extension,
         )
         self.labels_path = labels_path
 
+        self.index_position_in_name = index_position_in_name
+        self.original_clip_min = original_clip_min
+        self.original_clip_max = original_clip_max
         self.num_classes = num_classes
         self.spatial_size = spatial_size
         self.batch_size = batch_size
@@ -138,6 +146,9 @@ class BrainClassification3DModel(pl.LightningModule):
             list_of_paths=self.train_paths,
             labels_path=self.labels_path,
             spatial_size=self.spatial_size,
+            index_position_in_name=self.index_position_in_name,
+            original_clip_max=self.original_clip_max,
+            original_clip_min=self.original_clip_min,
         )
 
         train_brain_dataloader = create_data_loader(
@@ -154,6 +165,9 @@ class BrainClassification3DModel(pl.LightningModule):
             list_of_paths=self.train_paths,
             labels_path=self.labels_path,
             spatial_size=self.spatial_size,
+            index_position_in_name=self.index_position_in_name,
+            original_clip_max=self.original_clip_max,
+            original_clip_min=self.original_clip_min,
         )
 
         val_brain_dataloader = create_data_loader(
