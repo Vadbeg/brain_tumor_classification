@@ -1,7 +1,7 @@
 """Training module"""
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -69,11 +69,11 @@ class BrainClassification3DModel(pl.LightningModule):
 
         self.f1_func = torchmetrics.F1(num_classes=num_classes)
         self.acc_func = torchmetrics.Accuracy(num_classes=num_classes)
-        self.auc_func = torchmetrics.AUC()
+        self.roc_auc_func = torchmetrics.AUROC(num_classes=num_classes)
 
     def training_step(
         self, batch: Dict, batch_id: int
-    ) -> torch.Tensor:  # pylint: disable=W0613
+    ) -> Dict[str, Any]:  # pylint: disable=W0613
         image = batch[self.img_key]
         label = batch[self.lbl_key]
 
@@ -90,11 +90,11 @@ class BrainClassification3DModel(pl.LightningModule):
         )
         self._log_metrics(preds=result, target=label, prefix='train')
 
-        return loss
+        return {'loss': loss, 'pred': result, 'label': label}
 
     def validation_step(
         self, batch: Dict, batch_id: int
-    ) -> torch.Tensor:  # pylint: disable=W0613
+    ) -> Dict[str, Any]:  # pylint: disable=W0613
         image = batch[self.img_key]
         label = batch[self.lbl_key]
 
@@ -111,7 +111,7 @@ class BrainClassification3DModel(pl.LightningModule):
         )
         self._log_metrics(preds=result, target=label, prefix='val')
 
-        return loss
+        return {'loss': loss, 'pred': result, 'label': label}
 
     def test_step(
         self,
@@ -175,7 +175,7 @@ class BrainClassification3DModel(pl.LightningModule):
         val_brain_dataloader = create_data_loader(
             dataset=val_brain_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=False,
             num_workers=self.num_processes,
         )
 
@@ -200,9 +200,6 @@ class BrainClassification3DModel(pl.LightningModule):
     ) -> None:
         f1_value = self.f1_func(preds, target)
         acc_value = self.acc_func(preds, target)
-        # auc_value = self.auc_func(
-        #     torch.argmax(preds), target
-        # )
 
         self.log(
             name=f'{prefix}_f1',
@@ -220,13 +217,48 @@ class BrainClassification3DModel(pl.LightningModule):
             on_epoch=True,
             on_step=True,
         )
-        # self.log(
-        #     name=f'{prefix}_auc',
-        #     value=auc_value,
-        #     prog_bar=True,
-        #     logger=True,
-        #     on_epoch=True,
-        # )
+
+    def training_epoch_end(self, outputs: List[Dict[str, torch.Tensor]]) -> None:
+        all_batch_predictions = []
+        all_batch_labels = []
+
+        for curr_output in outputs:
+            all_batch_predictions.append(curr_output['pred'])
+            all_batch_labels.append(curr_output['label'])
+
+        predictions = torch.cat(tensors=all_batch_predictions)
+        labels = torch.cat(tensors=all_batch_labels)
+
+        roc_auc_value = self.roc_auc_func(predictions, labels)
+
+        self.log(
+            name=f'train_roc_auc',
+            value=roc_auc_value,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+        )
+
+    def validation_epoch_end(self, outputs: List[Dict[str, torch.Tensor]]) -> None:
+        all_batch_predictions = []
+        all_batch_labels = []
+
+        for curr_output in outputs:
+            all_batch_predictions.append(curr_output['pred'])
+            all_batch_labels.append(curr_output['label'])
+
+        predictions = torch.cat(tensors=all_batch_predictions)
+        labels = torch.cat(tensors=all_batch_labels)
+
+        roc_auc_value = self.roc_auc_func(predictions, labels)
+
+        self.log(
+            name=f'val_roc_auc',
+            value=roc_auc_value,
+            prog_bar=True,
+            logger=True,
+            on_epoch=True,
+        )
 
     def _get_model_output(self):
         pass

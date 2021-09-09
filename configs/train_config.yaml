@@ -1,11 +1,11 @@
 seed_everything: 27
 trainer:
-#  logger:
-#    - class_path: pytorch_lightning.loggers.WandbLogger
-#      init_args:
-#        name: first-try
-#        project: brain-classification
-#        log_model: True
+  logger:
+    - class_path: pytorch_lightning.loggers.WandbLogger
+      init_args:
+        name: first-try
+        project: brain-classification
+        log_model: True
   checkpoint_callback: true
   callbacks:
     - class_path: pytorch_lightning.callbacks.EarlyStopping
@@ -81,7 +81,7 @@ model:
   original_clip_min: 0
   original_clip_max: 4
   batch_size: 3
-  num_processes: 1
+  num_processes: 4
   spatial_size:
     - 196
     - 196
