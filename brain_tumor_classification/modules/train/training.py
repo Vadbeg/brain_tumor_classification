@@ -30,6 +30,7 @@ class BrainClassification3DModel(pl.LightningModule):
         original_clip_min: int = 0,
         original_clip_max: int = 1000,
         batch_size: int = 2,
+        num_processes: int = 1,
         learning_rate: float = 0.001,
         model_depth: int = 10,
         num_input_channels: int = 1,
@@ -56,6 +57,7 @@ class BrainClassification3DModel(pl.LightningModule):
         self.num_classes = num_classes
         self.spatial_size = spatial_size
         self.batch_size = batch_size
+        self.num_processes = num_processes
         self.learning_rate = learning_rate
 
         self.loss = torch.nn.CrossEntropyLoss()
@@ -155,7 +157,7 @@ class BrainClassification3DModel(pl.LightningModule):
             dataset=train_brain_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=4,
+            num_workers=self.num_processes,
         )
 
         return train_brain_dataloader
@@ -174,7 +176,7 @@ class BrainClassification3DModel(pl.LightningModule):
             dataset=val_brain_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=4,
+            num_workers=self.num_processes,
         )
 
         return val_brain_dataloader
