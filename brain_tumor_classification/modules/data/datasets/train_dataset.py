@@ -3,10 +3,15 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
+import nibabel as nib
+import numpy as np
 import pandas as pd
 
 from brain_tumor_classification.modules.data.datasets.base_dataset import BaseDataset
-from brain_tumor_classification.modules.data.utils import get_load_transforms
+from brain_tumor_classification.modules.data.utils import (
+    get_load_transforms,
+    get_preprocessing_transforms,
+)
 
 
 class BrainDataset(BaseDataset):
@@ -31,7 +36,7 @@ class BrainDataset(BaseDataset):
             index_position_in_name=index_position_in_name,
         )
 
-        self.load_transforms = get_load_transforms(
+        self.load_transforms = get_preprocessing_transforms(
             img_key=self.img_key,
             original_min=original_clip_min,
             original_max=original_clip_max,
@@ -47,8 +52,9 @@ class BrainDataset(BaseDataset):
         )
 
         image_label = self.labels[image_idx]
+        image = self._load_ct(ct_path=image_path)
 
-        item = {self.img_key: image_path, self.lbl_key: image_label}
+        item = {self.img_key: image, self.lbl_key: image_label}
 
         item = self.load_transforms(item)
 
@@ -56,6 +62,21 @@ class BrainDataset(BaseDataset):
 
     def __len__(self):
         return len(self.list_of_paths)
+
+    @staticmethod
+    def _load_ct(ct_path: Union[str, Path]) -> np.ndarray:
+        ct_path = str(ct_path)
+
+        ct_all_info: nib.Nifti1Image = nib.load(filename=ct_path)
+        orig_ornt = nib.io_orientation(ct_all_info.affine)
+        targ_ornt = nib.orientations.axcodes2ornt(axcodes='LPS')
+        transform = nib.orientations.ornt_transform(
+            start_ornt=orig_ornt, end_ornt=targ_ornt
+        )
+
+        img_ornt = ct_all_info.as_reoriented(ornt=transform)
+
+        return img_ornt.get_fdata(dtype=np.float64)
 
     @staticmethod
     def _load_labels(

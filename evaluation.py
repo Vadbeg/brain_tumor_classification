@@ -9,7 +9,7 @@ from brain_tumor_classification.modules.data.datasets.eval_dataset import (
     BrainDicomEvalDataset,
 )
 from brain_tumor_classification.modules.evaluation.model_evaluator import ModelEvaluator
-from brain_tumor_classification.modules.model.resnet import generate_resnet_model
+from brain_tumor_classification.modules.model.resnet.resnet import generate_resnet_model
 
 
 def rename_keys(state_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:

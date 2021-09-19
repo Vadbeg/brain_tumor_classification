@@ -1,5 +1,6 @@
 """Training module"""
 
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -13,7 +14,8 @@ from brain_tumor_classification.modules.data.utils import (
     create_data_loader,
     get_train_val_paths,
 )
-from brain_tumor_classification.modules.model.resnet import generate_resnet_model
+from brain_tumor_classification.modules.model.effnet.effnet import EfficientNet3D
+from brain_tumor_classification.modules.model.resnet.resnet import generate_resnet_model
 
 
 class BrainClassification3DModel(pl.LightningModule):
@@ -66,6 +68,9 @@ class BrainClassification3DModel(pl.LightningModule):
             n_input_channels=num_input_channels,
             n_classes=num_classes,
         )
+        self.model = EfficientNet3D.from_name(
+            "efficientnet-b5", override_params={'num_classes': 2}, in_channels=1
+        )
 
         self.f1_func = torchmetrics.F1(num_classes=num_classes)
         self.acc_func = torchmetrics.Accuracy(num_classes=num_classes)
@@ -110,36 +115,6 @@ class BrainClassification3DModel(pl.LightningModule):
         self._log_metrics(preds=result, target=label, prefix='val')
 
         return {'loss': loss, 'pred': result, 'label': label}
-
-    def test_step(
-        self,
-        batch: Dict,
-        batch_id: int,  # pylint: disable=W0613
-        dataloader_idx: Optional[int] = None,  # pylint: disable=W0613
-    ) -> torch.Tensor:
-        self._initialize_interactions_simulator(deterministic=True)
-
-        loss, dice = self._get_interactions_result_loss_metric(batch=batch)
-        metric_postfix = self._get_metric_postfix(batch=batch)
-
-        self.log(
-            name=f'loss_\"{metric_postfix}\"',
-            value=loss,
-            prog_bar=True,
-            logger=True,
-            on_epoch=True,
-            add_dataloader_idx=True,
-        )
-        self.log(
-            name=f'dice_\"{metric_postfix}\"',
-            value=torch.mean(dice),
-            prog_bar=True,
-            logger=True,
-            on_epoch=True,
-            add_dataloader_idx=True,
-        )
-
-        return loss
 
     def train_dataloader(self) -> DataLoader:
         train_brain_dataset = BrainDataset(
@@ -225,15 +200,19 @@ class BrainClassification3DModel(pl.LightningModule):
         predictions = torch.cat(tensors=all_batch_predictions)
         labels = torch.cat(tensors=all_batch_labels)
 
-        roc_auc_value = self.roc_auc_func(predictions, labels)
+        try:
+            predictions = torch.softmax(predictions, dim=1)[:, 1]
+            roc_auc_value = self.roc_auc_func(predictions, labels)
 
-        self.log(
-            name=f'train_roc_auc',
-            value=roc_auc_value,
-            prog_bar=True,
-            logger=True,
-            on_epoch=True,
-        )
+            self.log(
+                name=f'train_roc_auc',
+                value=roc_auc_value,
+                prog_bar=True,
+                logger=True,
+                on_epoch=True,
+            )
+        except ValueError as err:
+            warnings.warn(str(err))
 
     def validation_epoch_end(self, outputs: List[Dict[str, torch.Tensor]]) -> None:
         all_batch_predictions = []
@@ -246,15 +225,19 @@ class BrainClassification3DModel(pl.LightningModule):
         predictions = torch.cat(tensors=all_batch_predictions)
         labels = torch.cat(tensors=all_batch_labels)
 
-        roc_auc_value = self.roc_auc_func(predictions, labels)
+        try:
+            predictions = torch.softmax(predictions, dim=1)[:, 1]
+            roc_auc_value = self.roc_auc_func(predictions, labels)
 
-        self.log(
-            name=f'val_roc_auc',
-            value=roc_auc_value,
-            prog_bar=True,
-            logger=True,
-            on_epoch=True,
-        )
+            self.log(
+                name=f'val_roc_auc',
+                value=roc_auc_value,
+                prog_bar=True,
+                logger=True,
+                on_epoch=True,
+            )
+        except ValueError as err:
+            warnings.warn(str(err))
 
     def _get_model_output(self):
         pass

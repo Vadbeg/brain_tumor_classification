@@ -1,11 +1,11 @@
 seed_everything: 27
 trainer:
-  logger:
-    - class_path: pytorch_lightning.loggers.WandbLogger
-      init_args:
-        name: masks-train
-        project: brain-classification
-        log_model: True
+#  logger:
+#    - class_path: pytorch_lightning.loggers.WandbLogger
+#      init_args:
+#        name: masks-train
+#        project: brain-classification
+#        log_model: True
   checkpoint_callback: true
   callbacks:
     - class_path: pytorch_lightning.callbacks.EarlyStopping
@@ -71,17 +71,17 @@ trainer:
   multiple_trainloader_mode: max_size_cycle
   stochastic_weight_avg: false
 model:
-  train_dataset_path: /media/vadbeg/HDD/Data_HDD/Kaggle/BraTS2021_seg/BraTS2021_Training_Data
+  train_dataset_path: /home/vadbeg/Data_SSD/Kaggle/RSNA_NIFTI/FLAIR_SITK/train
   labels_path: /home/vadbeg/Data_SSD/Kaggle/rsna-miccai-brain-tumor-radiogenomic-classification/train_labels.csv
   train_split_percent: 0.7
   dataset_item_limit: null
   shuffle_dataset: true
-  ct_file_extension: '**/*_seg.nii.gz'
-  index_position_in_name: 1
-  original_clip_min: 0
-  original_clip_max: 4
-  batch_size: 3
-  num_processes: 4
+  ct_file_extension: '**/*_FLAIR.nii.gz'
+  index_position_in_name: 0
+  original_clip_min: -200
+  original_clip_max: 2500
+  batch_size: 5
+  num_processes: 3
   spatial_size:
     - 196
     - 196

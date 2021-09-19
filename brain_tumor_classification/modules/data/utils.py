@@ -72,7 +72,7 @@ def get_load_transforms(
     )
 
     load_transforms = Compose(
-        [LoadImaged(keys=[img_key], dtype=np.float32), *preprocessing_transforms]
+        [LoadImaged(keys=[img_key], dtype=np.float32), preprocessing_transforms]
     )
 
     return load_transforms
@@ -85,18 +85,20 @@ def get_preprocessing_transforms(
     res_min: float = 0.0,
     res_max: float = 1.0,
     spatial_size: Tuple[int, int, int] = (196, 196, 128),
-) -> List[Transform]:
-    preprocessing_transforms = [
-        AddChanneld(keys=[img_key]),
-        ScaleIntensityRanged(
-            keys=[img_key],
-            a_min=original_min,
-            a_max=original_max,
-            b_min=res_min,
-            b_max=res_max,
-            clip=True,
-        ),
-        Resized(keys=[img_key], spatial_size=spatial_size),
-    ]
+) -> Compose:
+    preprocessing_transforms = Compose(
+        [
+            AddChanneld(keys=[img_key]),
+            ScaleIntensityRanged(
+                keys=[img_key],
+                a_min=original_min,
+                a_max=original_max,
+                b_min=res_min,
+                b_max=res_max,
+                clip=True,
+            ),
+            Resized(keys=[img_key], spatial_size=spatial_size),
+        ]
+    )
 
     return preprocessing_transforms

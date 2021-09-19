@@ -54,8 +54,8 @@ class ModelEvaluator:
         image_tensor = image_tensor.unsqueeze(0).to(self.device)
 
         result = self.model(image_tensor)
-        label = torch.argmax(result).cpu()
-        label = int(label.numpy())
+        result = torch.softmax(result, dim=1).cpu()
+        label = result[0, 1].detach().numpy()
 
         return label
 
